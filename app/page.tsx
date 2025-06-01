@@ -46,7 +46,7 @@ export default function HomePage() {
       const user = auth.currentUser;
       if (!user) throw new Error("User not authenticated");
       const token = await user.getIdToken();
-      const res = await fetch("http://localhost:8080/v1/feeds", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/feeds`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Failed to fetch feeds");
@@ -70,7 +70,7 @@ export default function HomePage() {
     setCreating(true);
     try {
       const token = await user.getIdToken();
-      const res = await fetch("http://localhost:8080/v1/feeds", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/feeds`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -159,7 +159,7 @@ export default function HomePage() {
                   <Plus className="w-5 h-5 mr-2" />
                   {showCreateForm ? "Hide Form" : "Add New Feed"}
                 </Button>
-                
+
                 {feeds.length > 0 && (
                   <Button
                     variant="outline"
@@ -341,7 +341,7 @@ export default function HomePage() {
                     </motion.div>
                   ))}
                 </div>
-                
+
                 {feeds.length > 6 && (
                   <div className="mt-6 text-center">
                     <Button

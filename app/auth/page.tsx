@@ -57,7 +57,7 @@ export default function AuthPage() {
 
   const sendTokenToBackend = async (token: string) => {
     try {
-      const res = await fetch("http://localhost:8080/v1/users", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/users`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,

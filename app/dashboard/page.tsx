@@ -76,8 +76,8 @@ export default function Dashboard() {
   const router = useRouter();
 
   // Memoized computed values for performance
-  const totalItems = useMemo(() => 
-    Object.values(feedItems).reduce((total, items) => total + items.length, 0), 
+  const totalItems = useMemo(() =>
+    Object.values(feedItems).reduce((total, items) => total + items.length, 0),
     [feedItems]
   );
 
@@ -99,7 +99,7 @@ export default function Dashboard() {
 
   const filteredFeeds = useMemo(() => {
     if (!searchQuery) return feeds;
-    return feeds.filter(feed => 
+    return feeds.filter(feed =>
       feed.Name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       feed.Url.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -122,11 +122,11 @@ export default function Dashboard() {
   const fetchFollowedFeeds = useCallback(async (user: any) => {
     try {
       const token = await user.getIdToken();
-      const res = await fetch("http://localhost:8080/v1/feed-followers", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/feed-followers`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error(`Failed to fetch followed feeds: ${res.status}`);
-      
+
       const data = await res.json();
       const followed = new Set<string>((Array.isArray(data) ? data : []).map((f: FeedFollower) => f.FeedID));
       setFollowedFeeds(followed);
@@ -147,7 +147,7 @@ export default function Dashboard() {
 
     try {
       const token = await user.getIdToken();
-      const res = await fetch("http://localhost:8080/v1/feed-followers", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/feed-followers`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -155,9 +155,9 @@ export default function Dashboard() {
         },
         body: JSON.stringify({ feed_id: feedId, user_id: user.uid }),
       });
-      
+
       if (!res.ok) throw new Error(`Failed to follow feed: ${res.status}`);
-      
+
       setFollowedFeeds(prev => new Set(prev).add(feedId));
       toast.success("Feed followed!");
     } catch (error) {
@@ -183,13 +183,13 @@ export default function Dashboard() {
 
     try {
       const token = await user.getIdToken();
-      const res = await fetch(`http://localhost:8080/v1/feed-followers/${feedId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/feed-followers/${feedId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       if (!res.ok) throw new Error(`Failed to unfollow feed: ${res.status}`);
-      
+
       setFollowedFeeds(prev => {
         const newSet = new Set(prev);
         newSet.delete(feedId);
@@ -234,14 +234,14 @@ export default function Dashboard() {
     try {
       const user = auth.currentUser;
       if (!user) throw new Error("User not authenticated");
-      
+
       const token = await user.getIdToken();
-      const res = await fetch("http://localhost:8080/v1/feeds", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/feeds`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       if (!res.ok) throw new Error(`Failed to fetch feeds: ${res.status}`);
-      
+
       const data = await res.json();
       const feedsData = Array.isArray(data) ? data : [];
       setFeeds(feedsData);
@@ -270,13 +270,13 @@ export default function Dashboard() {
 
   const fetchFeedItems = useCallback(async (feedId: string, token: string) => {
     if (!feedId) throw new Error("Feed ID is undefined");
-    
-    const res = await fetch(`http://localhost:8080/v1/feeds/${feedId}/items`, {
+
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/feeds/${feedId}/items`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    
+
     if (!res.ok) throw new Error(`Failed to fetch items: ${res.status}`);
-    
+
     const data = await res.json();
     return processItems(data);
   }, [processItems]);
@@ -288,7 +288,6 @@ export default function Dashboard() {
       toast.error("Please sign in to continue");
       return;
     }
-    
     if (!newFeed.name.trim() || !newFeed.url.trim()) {
       toast.error("Please fill in both name and URL");
       return;
@@ -298,7 +297,7 @@ export default function Dashboard() {
 
     try {
       const token = await user.getIdToken();
-      const res = await fetch("http://localhost:8080/v1/feeds", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/feeds`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -306,12 +305,12 @@ export default function Dashboard() {
         },
         body: JSON.stringify({ ...newFeed, user_id: user.uid }),
       });
-      
+
       if (!res.ok) {
         const errorText = await res.text();
         throw new Error(`Failed to create feed: ${errorText}`);
       }
-      
+
       const data = await res.json();
       setFeeds(prev => [...prev, data]);
       setNewFeed({ name: "", url: "" });
@@ -337,13 +336,13 @@ export default function Dashboard() {
 
     try {
       const token = await user.getIdToken();
-      const res = await fetch(`http://localhost:8080/v1/feeds/${feedId}/scrape`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/feeds/${feedId}/scrape`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       if (!res.ok) throw new Error(`Failed to scrape feed: ${res.status}`);
-      
+
       const items = await fetchFeedItems(feedId, token);
       setFeedItems(prev => ({ ...prev, [feedId]: items }));
       toast.success(`Feed refreshed! Found ${items.length} items.`);
@@ -370,13 +369,13 @@ export default function Dashboard() {
 
     try {
       const token = await user.getIdToken();
-      const res = await fetch(`http://localhost:8080/v1/feeds/${feedId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/feeds/${feedId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       if (!res.ok) throw new Error(`Failed to delete feed: ${res.status}`);
-      
+
       setFeeds(prev => prev.filter(feed => feed.ID !== feedId));
       setFeedItems(prev => {
         const updated = { ...prev };
@@ -408,11 +407,11 @@ export default function Dashboard() {
       const now = new Date();
       const diffTime = Math.abs(now.getTime() - date.getTime());
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      
+
       if (diffDays === 1) return "Today";
       if (diffDays === 2) return "Yesterday";
       if (diffDays <= 7) return `${diffDays - 1} days ago`;
-      
+
       return date.toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
@@ -445,7 +444,7 @@ export default function Dashboard() {
               </h1>
               <p className="text-gray-600 text-sm sm:text-base">Stay updated with your favorite sources</p>
             </div>
-            
+
             {/* Search Bar */}
             <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
               <div className="relative">
@@ -460,15 +459,15 @@ export default function Dashboard() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
-              
+
               <button
                 onClick={() => setShowCreateForm(!showCreateForm)}
                 className="group bg-gradient-to-r from-blue-600 to-purple-600 text-white px-5 py-2.5 rounded-2xl font-medium hover:shadow-lg hover:shadow-blue-500/25 active:scale-95 transition-all duration-200 flex items-center justify-center gap-2"
               >
-                <svg 
-                  className={`w-4 h-4 transition-transform duration-200 ${showCreateForm ? 'rotate-45' : ''}`} 
-                  fill="none" 
-                  stroke="currentColor" 
+                <svg
+                  className={`w-4 h-4 transition-transform duration-200 ${showCreateForm ? 'rotate-45' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -625,7 +624,7 @@ export default function Dashboard() {
               </p>
             )}
           </div>
-          
+
           {filteredFeeds.length === 0 ? (
             <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl shadow-gray-200/50 border border-white/30 p-12 text-center">
               <div className="text-6xl mb-4">
@@ -635,7 +634,7 @@ export default function Dashboard() {
                 {searchQuery ? "No feeds found" : "No feeds yet"}
               </h3>
               <p className="text-gray-500 mb-6 max-w-md mx-auto">
-                {searchQuery 
+                {searchQuery
                   ? `No feeds match "${searchQuery}". Try a different search term.`
                   : "Get started by adding your first RSS feed. Connect to news sites, blogs, or any website with an RSS feed."
                 }
@@ -677,10 +676,10 @@ export default function Dashboard() {
             onClick={() => setShowCreateForm(!showCreateForm)}
             className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-full shadow-2xl shadow-blue-500/30 hover:shadow-blue-500/40 active:scale-95 transition-all duration-200"
           >
-            <svg 
-              className={`w-6 h-6 transition-transform duration-200 ${showCreateForm ? 'rotate-45' : ''}`} 
-              fill="none" 
-              stroke="currentColor" 
+            <svg
+              className={`w-6 h-6 transition-transform duration-200 ${showCreateForm ? 'rotate-45' : ''}`}
+              fill="none"
+              stroke="currentColor"
               viewBox="0 0 24 24"
             >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

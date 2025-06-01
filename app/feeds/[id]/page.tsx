@@ -53,12 +53,12 @@ const LoadingSkeleton = () => (
 );
 
 // Modern button component
-const ModernButton = ({ 
-  onClick, 
-  disabled, 
-  variant = "primary", 
-  size = "md", 
-  children, 
+const ModernButton = ({
+  onClick,
+  disabled,
+  variant = "primary",
+  size = "md",
+  children,
   icon,
   className = ""
 }: {
@@ -71,13 +71,13 @@ const ModernButton = ({
   className?: string;
 }) => {
   const baseClasses = "inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
-  
+
   const variantClasses = {
     primary: "bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md focus:ring-blue-500",
     secondary: "bg-gray-100 hover:bg-gray-200 text-gray-900 focus:ring-gray-500",
     ghost: "hover:bg-gray-100 text-gray-700 focus:ring-gray-500"
   };
-  
+
   const sizeClasses = {
     sm: "px-3 py-2 text-sm rounded-lg",
     md: "px-4 py-2.5 text-sm rounded-xl",
@@ -120,11 +120,11 @@ export default function FeedDetail() {
 
   const processItems = useCallback((rawData: any): FeedItem[] => {
     if (!rawData) return [];
-    
+
     if (Array.isArray(rawData)) {
       return rawData.map(extractItemData);
     }
-    
+
     if (typeof rawData === 'object') {
       const possibleArrays = Object.values(rawData).filter(Array.isArray);
       if (possibleArrays.length > 0) {
@@ -132,7 +132,7 @@ export default function FeedDetail() {
       }
       return [extractItemData(rawData)];
     }
-    
+
     return [];
   }, [extractItemData]);
 
@@ -160,12 +160,12 @@ export default function FeedDetail() {
       const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
       const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
       const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-      
+
       if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
       if (diffInHours < 24) return `${diffInHours}h ago`;
       if (diffInDays === 1) return "Yesterday";
       if (diffInDays < 7) return `${diffInDays}d ago`;
-      
+
       return date.toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric'
@@ -179,39 +179,39 @@ export default function FeedDetail() {
   const fetchFeedAndItems = useCallback(async (user: any) => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const token = await user.getIdToken();
 
       const [feedsRes, itemsRes] = await Promise.all([
-        fetch("http://localhost:8080/v1/feeds", {
+        fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/feeds`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        fetch(`http://localhost:8080/v1/feeds/${id}/items`, {
+        fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/feeds/${id}/items`, {
           headers: { Authorization: `Bearer ${token}` },
         })
       ]);
-      
+
       if (!feedsRes.ok) {
         throw new Error(`Failed to fetch feeds: ${feedsRes.status}`);
       }
       if (!itemsRes.ok) {
         throw new Error(`Failed to fetch items: ${itemsRes.status}`);
       }
-      
+
       const [feedsData, itemsData] = await Promise.all([
         feedsRes.json(),
         itemsRes.json()
       ]);
-      
+
       const selectedFeed = feedsData.find((f: Feed) => f.ID === id);
       if (!selectedFeed) {
         throw new Error("Feed not found");
       }
-      
+
       setFeed(selectedFeed);
       setItems(processItems(itemsData));
-      
+
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
       setError(errorMessage);
@@ -227,32 +227,32 @@ export default function FeedDetail() {
       toast.error("User not authenticated");
       return;
     }
-    
+
     setScraping(true);
-    
+
     try {
       const token = await user.getIdToken();
-      const res = await fetch(`http://localhost:8080/v1/feeds/${feedId}/scrape`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/feeds/${feedId}/scrape`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       if (!res.ok) {
         throw new Error(`Failed to scrape feed: ${res.status}`);
       }
-      
+
       // Refresh items after scraping
-      const itemsRes = await fetch(`http://localhost:8080/v1/feeds/${feedId}/items`, {
+      const itemsRes = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/v1/feeds/${feedId}/items`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       if (itemsRes.ok) {
         const itemsData = await itemsRes.json();
         const processedItems = processItems(itemsData);
         setItems(processedItems);
         toast.success(`Feed updated! Found ${processedItems.length} items.`);
       }
-      
+
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Failed to scrape feed";
       toast.error("Error scraping feed: " + errorMessage);
@@ -345,9 +345,9 @@ export default function FeedDetail() {
       <div className="container mx-auto px-4 py-6 max-w-4xl">
         {/* Header with back navigation */}
         <div className="flex items-center mb-6">
-          <ModernButton 
-            onClick={() => router.back()} 
-            variant="ghost" 
+          <ModernButton
+            onClick={() => router.back()}
+            variant="ghost"
             size="sm"
             icon={<ArrowLeft className="w-4 h-4" />}
             className="mr-4"
@@ -380,11 +380,11 @@ export default function FeedDetail() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="bg-gray-50 rounded-lg p-3">
-                <a 
-                  href={feed.Url} 
-                  target="_blank" 
+                <a
+                  href={feed.Url}
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-blue-600 hover:text-blue-800 transition-colors break-all flex items-center gap-1 group"
                 >
@@ -393,14 +393,14 @@ export default function FeedDetail() {
                 </a>
               </div>
             </div>
-            
+
             <ModernButton
               onClick={() => handleScrapeFeed(id as string)}
               disabled={scraping}
               variant="primary"
               size="md"
-              icon={scraping ? 
-                <RefreshCw className="w-4 h-4 animate-spin" /> : 
+              icon={scraping ?
+                <RefreshCw className="w-4 h-4 animate-spin" /> :
                 <RefreshCw className="w-4 h-4" />
               }
             >
@@ -441,8 +441,8 @@ export default function FeedDetail() {
           ) : (
             <div className="divide-y divide-gray-200/50">
               {items.map((item, index) => (
-                <article 
-                  key={item._id || index} 
+                <article
+                  key={item._id || index}
                   className="p-6 hover:bg-gray-50/50 transition-colors group"
                 >
                   <div className="space-y-3">
@@ -461,13 +461,13 @@ export default function FeedDetail() {
                         <span>{item.title || 'Untitled'}</span>
                       )}
                     </h3>
-                    
+
                     {item.description && (
                       <p className="text-gray-600 text-sm leading-relaxed line-clamp-2">
                         {item.description}
                       </p>
                     )}
-                    
+
                     <div className="flex items-center gap-4 text-xs text-gray-500">
                       <div className="flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
